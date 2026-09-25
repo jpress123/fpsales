@@ -1,0 +1,5 @@
+# GitHub Pages settings: keep the helper files off the public site.
+exclude:
+  - README.md
+  - build.py
+  - private

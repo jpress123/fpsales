@@ -14,7 +14,7 @@ Run from this folder after editing any template:
 Uses the Python standard library only. No installs needed.
 
 Crypto: PBKDF2-HMAC-SHA256 (310,000 rounds) derives two 32-byte keys from
-"username\\npassword". The payload is encrypted with HMAC-SHA256 in counter
+"username\\npassword" (user name lowercased, so sign-in ignores capitalization). The payload is encrypted with HMAC-SHA256 in counter
 mode and authenticated with HMAC-SHA256 (encrypt-then-MAC). index.html
 reverses this with the browser's built-in Web Crypto API.
 """
@@ -104,7 +104,7 @@ def main():
     }, ensure_ascii=False).encode("utf-8")
 
     salt, nonce = os.urandom(16), os.urandom(16)
-    keys = hashlib.pbkdf2_hmac("sha256", f"{user}\n{pw}".encode("utf-8"), salt, ITERATIONS, 64)
+    keys = hashlib.pbkdf2_hmac("sha256", f"{user.lower()}\n{pw}".encode("utf-8"), salt, ITERATIONS, 64)
     enc_key, mac_key = keys[:32], keys[32:]
     ct = keystream_xor(enc_key, nonce, payload)
     tag = hmac.new(mac_key, salt + nonce + ct, hashlib.sha256).digest()

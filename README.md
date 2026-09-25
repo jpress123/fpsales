@@ -1,4 +1,4 @@
-# FoodPrep Sales Pipeline v1.0
+# FoodPrep Client Catalyzer V1.0
 
 A private tool for Nati Press. After signing in, Nati enters a target’s name, title and company, chooses the service status and contact focus, and generates an outreach email to copy into Outlook.
 
@@ -17,13 +17,18 @@ fpsales/
 ├── build.py            # rebuilds data.enc.json from private/ (Python standard library only)
 ├── assets/logo.png     # FoodPrep logo, shown after sign-in
 ├── .gitignore          # keeps private/ off GitHub
+├── _config.yml         # hides README.md and build.py from the public site
 ├── README.md
 └── private/            # NEVER published (listed in .gitignore)
     ├── credentials.json            # Nati’s user name and password
     ├── FP_Sales_Email_samples.docx # original samples
     └── templates/
         ├── _signature.md           # signature added to every email
-        ├── none.md                 # status: No knife service (all focuses)
+        ├── none.md                 # status: No knife service, fallback for Unknown role
+        ├── none-procurement.md
+        ├── none-purchasing.md
+        ├── none-culinary.md
+        ├── none-executive.md
         ├── cozzini-procurement.md
         ├── cozzini-purchasing.md
         ├── cozzini-culinary.md
@@ -61,6 +66,13 @@ The site looks for `status-focus` first (e.g. `cozzini-culinary`), then falls ba
 | `{{title}}` | Title as typed |
 | `{{company}}` | Company as typed |
 | `{{company_s}}` | Company possessive: Darden’s, Landry’s, Brinks’ |
+
+## Using the site
+
+- Sign-in ignores capitalization of the user name (Nati1 or nati1). The password is exact.
+- Role is suggested from the title. General Manager counts as Executive.
+- **Open in Outlook** opens a new message in the computer’s default mail app with subject and body filled in. Add the recipient’s email first to fill the To line. Set Outlook as the default mail app for this to open Outlook.
+- If Nati edits the details after generating, the page flags the draft as out of date.
 
 ## Changing the password
 

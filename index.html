@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:,">
-<title>FoodPrep Sales Pipeline</title>
+<title>FoodPrep Client Catalyzer V1.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
@@ -230,6 +230,16 @@
   #subject { font-weight: 600; margin-bottom: 18px; }
   #body { min-height: 520px; resize: vertical; line-height: 1.55; white-space: pre-wrap; }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .stale {
+    margin-top: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fp-indigo-deep);
+    background: #FFF1E6;
+    border-left: 4px solid var(--fp-orange);
+    border-radius: 4px;
+  }
   .meta { font-size: 13px; color: var(--fp-grey); margin-top: 12px; }
   .empty {
     border: 2px dashed var(--fp-line);
@@ -276,7 +286,7 @@
     <div class="bar">
       <div class="brand">
         <img src="assets/logo.png" alt="FoodPrep Solutions">
-        <h1>Sales Pipeline</h1>
+        <h1>Client Catalyzer V1.0</h1>
       </div>
       <div class="who"><span id="who-name"></span><button type="button" id="logout">Sign out</button></div>
     </div>
@@ -311,6 +321,10 @@
           <label for="t-company">Company</label>
           <input id="t-company" autocomplete="off" placeholder="Darden Restaurants">
         </div>
+        <div class="field">
+          <label for="t-email">Email <em>(optional, for Open in Outlook)</em></label>
+          <input id="t-email" type="email" autocomplete="off" placeholder="michael.russo@darden.com">
+        </div>
       </fieldset>
 
       <fieldset>
@@ -337,10 +351,13 @@
         <input id="subject">
         <div class="out-label"><label for="body">Message</label></div>
         <textarea id="body" spellcheck="true"></textarea>
+        <div class="stale" id="stale" hidden>Details changed. Press Generate email to update this draft.</div>
         <div class="actions">
+          <button type="button" class="btn" id="open-mail">Open in Outlook</button>
           <button type="button" class="btn secondary" data-copy="subject">Copy subject</button>
           <button type="button" class="btn secondary" data-copy="body">Copy message</button>
         </div>
+        <div class="hint" id="mail-hint"></div>
         <div class="meta" id="meta"></div>
       </div>
     </section>
@@ -370,7 +387,7 @@
     if (!res.ok) throw new Error("load");
     const box = await res.json();
     const salt = b64(box.salt), nonce = b64(box.nonce), ct = b64(box.ct), tag = b64(box.tag);
-    const base = await crypto.subtle.importKey("raw", enc.encode(user + "\n" + pass), "PBKDF2", false, ["deriveBits"]);
+    const base = await crypto.subtle.importKey("raw", enc.encode(user.toLowerCase() + "\n" + pass), "PBKDF2", false, ["deriveBits"]);
     const bits = new Uint8Array(await crypto.subtle.deriveBits(
       { name: "PBKDF2", hash: "SHA-256", salt, iterations: box.iter }, base, 512));
     const hmacKey = (raw, use) => crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, use);
@@ -436,7 +453,7 @@
   });
 
   $("logout").addEventListener("click", () => {
-    clearSession(); DATA = null;
+    clearSession(); DATA = null; $("stale").hidden = true;
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
     $("lead-form").reset(); showEmpty();
     $("app").hidden = true; $("login").hidden = false; $("user").focus();
@@ -444,10 +461,10 @@
 
   /* ---------- Focus suggestion from title ---------- */
   const FOCUS_RULES = [
-    ["culinary",    /\b(chef|culinary|kitchen|menu|food and beverage|f&b|r&d)\b/i],
+    ["culinary",    /\b(chef|culinary|kitchen|menu|r&d)\b|food\s*(&|and)\s*beverage|\bf\s*&\s*b\b/i],
     ["procurement", /\b(procurement|sourcing|supply chain|supply|category manager|strategic sourcing)\b/i],
     ["purchasing",  /\b(purchasing|purchase|buyer|buying)\b/i],
-    ["executive",   /\b(ceo|coo|cfo|cpo|president|vp|svp|evp|vice president|chief|owner|founder|partner|operations|director|head)\b/i],
+    ["executive",   /\b(ceo|coo|cfo|cpo|president|vp|svp|evp|vice president|chief|owner|founder|partner|operations|director|head|general manager|gm)\b/i],
   ];
   let roleTouched = false;
   function suggestFocus() {
@@ -502,10 +519,31 @@
     };
     $("subject").value = fill(tpl.subject, vars);
     $("body").value = fill(tpl.body, vars) + "\n\n" + DATA.signature;
+    $("stale").hidden = true; lastEmail = $("t-email").value.trim(); $("mail-hint").textContent = "";
     $("meta").textContent = "Template: " + tpl.profile + "  ·  Templates updated " + DATA.built;
     $("empty").hidden = true; $("result").hidden = false;
     document.querySelectorAll("[data-copy]").forEach((b) => { b.classList.remove("done"); b.textContent = b.dataset.copy === "subject" ? "Copy subject" : "Copy message"; });
     if (window.matchMedia("(max-width: 860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* ---------- Stale draft notice ---------- */
+  let lastEmail = "";
+  const markStale = () => { if (!$("result").hidden) $("stale").hidden = false; };
+  ["t-name", "t-title", "t-company"].forEach((id) => $(id).addEventListener("input", markStale));
+  $("t-role").addEventListener("change", markStale);
+  document.querySelectorAll('input[name="status"]').forEach((r) => r.addEventListener("change", markStale));
+
+  /* ---------- Open in Outlook (default mail app) ---------- */
+  $("open-mail").addEventListener("click", () => {
+    const to = $("t-email").value.trim();
+    const hint = $("mail-hint");
+    if (to && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { hint.textContent = "Check the email address format."; hint.classList.add("warn"); return; }
+    hint.classList.remove("warn");
+    const body = $("body").value.replace(/\r?\n/g, "\r\n");
+    const url = "mailto:" + encodeURIComponent(to).replace(/%40/g, "@") +
+      "?subject=" + encodeURIComponent($("subject").value) + "&body=" + encodeURIComponent(body);
+    window.location.href = url;
+    hint.textContent = to ? "Opening your mail app…" : "Opening your mail app. Add the recipient there.";
   });
 
   /* ---------- Copy ---------- */
