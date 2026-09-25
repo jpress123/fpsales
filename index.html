@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
+<title>FoodPrep Sales Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  /* FoodPrep Solutions palette, from food-prep.com global styles */
+  :root {
+    --fp-indigo: #29235C;      /* primary */
+    --fp-indigo-deep: #0B053B;
+    --fp-orange: #FF7400;      /* secondary / accent */
+    --fp-orange-hover: #F96B39;
+    --fp-lavender: #EEEDF8;
+    --fp-ink: #263238;         /* body text */
+    --fp-grey: #90A4AE;
+    --fp-line: #CFD8DC;
+    --fp-bg: #EFF0F0;
+    --fp-field: #FAFBFC;
+    --fp-white: #FFFFFF;
+    --fp-error: #D93025;
+    --radius: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--fp-ink);
+    background: var(--fp-bg);
+  }
+  h1, h2, h3, .btn, label.chip span { font-family: "Raleway", system-ui, sans-serif; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Login ---------- */
+  #login {
+    min-height: 100vh;
+    background: var(--fp-indigo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  #login form { width: 100%; max-width: 320px; }
+  #login label {
+    display: block;
+    font-family: "Raleway", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.75);
+    margin: 0 0 6px;
+  }
+  #login input {
+    width: 100%;
+    padding: 12px 14px;
+    font: inherit;
+    color: var(--fp-ink);
+    background: var(--fp-white);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    margin-bottom: 18px;
+    outline: none;
+  }
+  #login input:focus { border-color: var(--fp-orange); }
+  #login .btn { width: 100%; margin-top: 4px; }
+  #login-error {
+    min-height: 24px;
+    margin-top: 14px;
+    color: #FFB38A;
+    font-size: 15px;
+    text-align: center;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--fp-white);
+    background: var(--fp-orange);
+    border: 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: var(--fp-orange-hover); }
+  .btn:disabled { opacity: .6; cursor: wait; }
+  .btn.secondary {
+    color: var(--fp-indigo);
+    background: var(--fp-white);
+    border: 1.5px solid var(--fp-indigo);
+    padding: 9px 16px;
+    font-size: 14px;
+  }
+  .btn.secondary:hover { background: var(--fp-lavender); }
+  .btn.secondary.done { color: var(--fp-white); background: var(--fp-indigo); }
+
+  /* ---------- App ---------- */
+  header {
+    background: var(--fp-white);
+    border-bottom: 4px solid var(--fp-orange);
+  }
+  .bar {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand img { height: 56px; width: auto; display: block; }
+  .brand h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--fp-indigo);
+    padding-left: 16px;
+    border-left: 1px solid var(--fp-line);
+  }
+  .who { font-size: 14px; color: var(--fp-grey); display: flex; align-items: center; gap: 14px; }
+  .who button {
+    font: inherit; font-weight: 600; color: var(--fp-indigo);
+    background: none; border: 0; cursor: pointer; padding: 4px 0;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 16px 48px;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .card {
+    background: var(--fp-white);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(41,35,92,.08), 0 6px 24px rgba(41,35,92,.06);
+    padding: 24px;
+  }
+  .card h2 {
+    margin: 0 0 18px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--fp-indigo);
+  }
+  fieldset { border: 0; padding: 0; margin: 0 0 22px; }
+  legend {
+    font-family: "Raleway", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--fp-indigo);
+    padding: 0;
+    margin-bottom: 10px;
+  }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .field label em { font-style: normal; font-weight: 400; color: var(--fp-grey); }
+  .field input, #subject, #body {
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--fp-ink);
+    background: var(--fp-field);
+    border: 1.5px solid var(--fp-line);
+    border-radius: var(--radius);
+    outline: none;
+  }
+  .field input:focus, #subject:focus, #body:focus { border-color: var(--fp-indigo); background: var(--fp-white); }
+  .field input.invalid { border-color: var(--fp-error); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  label.chip { position: relative; cursor: pointer; }
+  label.chip input { position: absolute; opacity: 0; pointer-events: none; }
+  label.chip span {
+    display: inline-block;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fp-indigo);
+    background: var(--fp-lavender);
+    border: 1.5px solid transparent;
+    border-radius: 999px;
+    transition: background .12s, color .12s;
+  }
+  label.chip:hover span { border-color: var(--fp-indigo); }
+  label.chip input:checked + span { color: var(--fp-white); background: var(--fp-indigo); }
+  label.chip input:focus-visible + span { outline: 2px solid var(--fp-orange); outline-offset: 2px; }
+  .hint { font-size: 13px; color: var(--fp-grey); margin-top: 8px; min-height: 20px; }
+  .hint.warn { color: var(--fp-error); }
+  #generate { width: 100%; font-size: 16px; padding: 14px; }
+
+  .out-label {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    font-size: 14px; font-weight: 600; margin: 0 0 6px;
+  }
+  #subject { font-weight: 600; margin-bottom: 18px; }
+  #body { min-height: 520px; resize: vertical; line-height: 1.55; white-space: pre-wrap; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .meta { font-size: 13px; color: var(--fp-grey); margin-top: 12px; }
+  .empty {
+    border: 2px dashed var(--fp-line);
+    border-radius: 10px;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--fp-grey);
+  }
+  .empty strong { display: block; font-family: "Raleway", sans-serif; color: var(--fp-indigo); font-size: 17px; margin-bottom: 6px; }
+
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; }
+    .brand h1 { display: none; }
+    .brand img { height: 44px; }
+    #body { min-height: 420px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<section id="login">
+  <form id="login-form" autocomplete="on" novalidate>
+    <label for="user">User name</label>
+    <input id="user" name="username" autocomplete="username" required>
+    <label for="pass">Password</label>
+    <input id="pass" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit" id="login-btn">Sign in</button>
+    <div id="login-error" role="alert"></div>
+  </form>
+</section>
+
+<!-- ===================== APP ===================== -->
+<div id="app" hidden>
+  <header>
+    <div class="bar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="FoodPrep Solutions">
+        <h1>Sales Pipeline</h1>
+      </div>
+      <div class="who"><span id="who-name"></span><button type="button" id="logout">Sign out</button></div>
+    </div>
+  </header>
+
+  <main>
+    <form class="card" id="lead-form" novalidate>
+      <h2>New lead</h2>
+
+      <fieldset>
+        <legend>Target</legend>
+        <div class="field">
+          <label for="t-name">Name</label>
+          <input id="t-name" autocomplete="off" placeholder="Michael Russo">
+        </div>
+        <div class="field">
+          <label for="t-title">Title</label>
+          <input id="t-title" autocomplete="off" placeholder="Executive Chef">
+        </div>
+        <div class="field">
+          <label for="t-company">Company</label>
+          <input id="t-company" autocomplete="off" placeholder="Darden Restaurants">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Service status</legend>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="status" value="none"><span>No knife service</span></label>
+          <label class="chip"><input type="radio" name="status" value="cozzini"><span>Uses Cozzini</span></label>
+          <label class="chip"><input type="radio" name="status" value="unknown" checked><span>Unknown</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Contact focus</legend>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="focus" value="procurement"><span>Procurement</span></label>
+          <label class="chip"><input type="radio" name="focus" value="purchasing"><span>Purchasing</span></label>
+          <label class="chip"><input type="radio" name="focus" value="culinary"><span>Culinary</span></label>
+          <label class="chip"><input type="radio" name="focus" value="executive"><span>Executive</span></label>
+        </div>
+        <div class="hint" id="focus-hint">Suggested from the title. Change it if needed.</div>
+      </fieldset>
+
+      <button class="btn" type="submit" id="generate">Generate email</button>
+      <div class="hint warn" id="form-error" role="alert"></div>
+    </form>
+
+    <section class="card" aria-live="polite">
+      <h2>Generated email</h2>
+      <div id="empty" class="empty">
+        <strong>No email yet</strong>
+        Fill in the target, choose the status and focus, then press Generate email.
+      </div>
+      <div id="result" hidden>
+        <div class="out-label"><label for="subject">Subject</label></div>
+        <input id="subject">
+        <div class="out-label"><label for="body">Message</label></div>
+        <textarea id="body" spellcheck="true"></textarea>
+        <div class="actions">
+          <button type="button" class="btn secondary" data-copy="subject">Copy subject</button>
+          <button type="button" class="btn secondary" data-copy="body">Copy message</button>
+        </div>
+        <div class="meta" id="meta"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const DATA_URL = "data.enc.json";
+  const SESSION_KEY = "fpsales.session.v1";
+  const $ = (id) => document.getElementById(id);
+  const enc = new TextEncoder();
+  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const concat = (...arrs) => {
+    const out = new Uint8Array(arrs.reduce((n, a) => n + a.length, 0));
+    let o = 0; for (const a of arrs) { out.set(a, o); o += a.length; }
+    return out;
+  };
+
+  let DATA = null;
+
+  /* ---------- Decryption (mirrors build.py) ---------- */
+  async function unlock(user, pass) {
+    const res = await fetch(DATA_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("load");
+    const box = await res.json();
+    const salt = b64(box.salt), nonce = b64(box.nonce), ct = b64(box.ct), tag = b64(box.tag);
+    const base = await crypto.subtle.importKey("raw", enc.encode(user + "\n" + pass), "PBKDF2", false, ["deriveBits"]);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits(
+      { name: "PBKDF2", hash: "SHA-256", salt, iterations: box.iter }, base, 512));
+    const hmacKey = (raw, use) => crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, use);
+    const macKey = await hmacKey(bits.slice(32), ["verify"]);
+    const ok = await crypto.subtle.verify("HMAC", macKey, tag, concat(salt, nonce, ct));
+    if (!ok) return null;
+    const encKey = await hmacKey(bits.slice(0, 32), ["sign"]);
+    const blocks = Math.ceil(ct.length / 32);
+    const streams = await Promise.all(Array.from({ length: blocks }, (_, i) => {
+      const ctr = new Uint8Array(4); new DataView(ctr.buffer).setUint32(0, i);
+      return crypto.subtle.sign("HMAC", encKey, concat(nonce, ctr));
+    }));
+    const pt = new Uint8Array(ct.length);
+    for (let i = 0; i < ct.length; i++) pt[i] = ct[i] ^ new Uint8Array(streams[i >> 5])[i & 31];
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  /* ---------- Session ---------- */
+  function saveSession(user, data) {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user, data })); } catch (e) {}
+  }
+  function loadSession() {
+    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); } catch (e) { return null; }
+  }
+  function clearSession() {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  }
+  function enterApp(user, data) {
+    DATA = data;
+    $("who-name").textContent = user;
+    $("login").hidden = true;
+    $("app").hidden = false;
+    $("t-name").focus();
+  }
+
+  $("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = $("user").value.trim(), pass = $("pass").value;
+    const btn = $("login-btn"), err = $("login-error");
+    err.textContent = "";
+    if (!user || !pass) { err.textContent = "Enter your user name and password."; return; }
+    btn.disabled = true; btn.textContent = "Signing in…";
+    try {
+      const data = await unlock(user, pass);
+      if (!data) { err.textContent = "Incorrect user name or password."; $("pass").value = ""; $("pass").focus(); }
+      else { saveSession(user, data); $("pass").value = ""; enterApp(user, data); }
+    } catch (ex) {
+      err.textContent = "Could not sign in. Check your connection and try again.";
+    } finally {
+      btn.disabled = false; btn.textContent = "Sign in";
+    }
+  });
+
+  $("logout").addEventListener("click", () => {
+    clearSession(); DATA = null;
+    $("lead-form").reset(); showEmpty();
+    $("app").hidden = true; $("login").hidden = false; $("user").focus();
+  });
+
+  /* ---------- Focus suggestion from title ---------- */
+  const FOCUS_RULES = [
+    ["culinary",    /\b(chef|culinary|kitchen|menu|food and beverage|f&b|r&d)\b/i],
+    ["procurement", /\b(procurement|sourcing|supply chain|supply|category manager|strategic sourcing)\b/i],
+    ["purchasing",  /\b(purchasing|purchase|buyer|buying)\b/i],
+    ["executive",   /\b(ceo|coo|cfo|cpo|president|vp|svp|evp|vice president|chief|owner|founder|partner|operations|director|head)\b/i],
+  ];
+  let focusTouched = false;
+  function suggestFocus() {
+    if (focusTouched) return;
+    const title = $("t-title").value;
+    const hit = FOCUS_RULES.find(([, re]) => re.test(title));
+    document.querySelectorAll('input[name="focus"]').forEach((r) => { r.checked = !!hit && r.value === hit[0]; });
+    $("focus-hint").textContent = hit ? "Suggested from the title. Change it if needed." : "Choose the contact focus.";
+  }
+  $("t-title").addEventListener("input", suggestFocus);
+  document.querySelectorAll('input[name="focus"]').forEach((r) =>
+    r.addEventListener("change", () => { focusTouched = true; $("focus-hint").textContent = "Set by you."; }));
+  $("lead-form").addEventListener("reset", () => { focusTouched = false; setTimeout(suggestFocus, 0); });
+
+  /* ---------- Email generation ---------- */
+  const radio = (name) => (document.querySelector(`input[name="${name}"]:checked`) || {}).value || "";
+  function firstName(full) {
+    const parts = full.replace(/^(chef|mr\.?|mrs\.?|ms\.?|dr\.?)\s+/i, "").trim().split(/\s+/);
+    return parts[0] || "";
+  }
+  function possessive(company) {
+    if (/['’]s$/i.test(company)) return company;
+    if (/s$/i.test(company)) return company + "’";
+    return company + "’s";
+  }
+  function fill(text, vars) {
+    return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (k in vars ? vars[k] : m));
+  }
+  function pickTemplate(status, focus) {
+    const t = DATA.templates;
+    return t[status + "-" + focus] || t[status] || null;
+  }
+  function showEmpty() { $("empty").hidden = false; $("result").hidden = true; }
+
+  $("lead-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("t-name").value.trim(), title = $("t-title").value.trim(), company = $("t-company").value.trim();
+    const status = radio("status"), focus = radio("focus");
+    const err = $("form-error");
+    $("t-name").classList.toggle("invalid", !name);
+    $("t-company").classList.toggle("invalid", !company);
+    if (!name || !company) { err.textContent = "Name and company are required."; return; }
+    if (!focus) { err.textContent = "Choose a contact focus."; return; }
+    const tpl = pickTemplate(status, focus);
+    if (!tpl) { err.textContent = "No template exists for this status and focus yet."; return; }
+    err.textContent = "";
+
+    const first = firstName(name);
+    const vars = {
+      name, title, company,
+      first_name: first,
+      greeting_name: focus === "culinary" ? "Chef " + first : first,
+      company_s: possessive(company),
+    };
+    $("subject").value = fill(tpl.subject, vars);
+    $("body").value = fill(tpl.body, vars) + "\n\n" + DATA.signature;
+    $("meta").textContent = "Template: " + tpl.profile + "  ·  Templates updated " + DATA.built;
+    $("empty").hidden = true; $("result").hidden = false;
+    document.querySelectorAll("[data-copy]").forEach((b) => { b.classList.remove("done"); b.textContent = b.dataset.copy === "subject" ? "Copy subject" : "Copy message"; });
+    if (window.matchMedia("(max-width: 860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* ---------- Copy ---------- */
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (e2) {}
+      ta.remove(); return ok;
+    }
+  }
+  document.querySelectorAll("[data-copy]").forEach((btn) => btn.addEventListener("click", async () => {
+    const ok = await copyText($(btn.dataset.copy).value);
+    const label = btn.dataset.copy === "subject" ? "Copy subject" : "Copy message";
+    btn.textContent = ok ? "Copied" : "Copy failed, select and copy manually";
+    btn.classList.toggle("done", ok);
+    setTimeout(() => { btn.textContent = label; btn.classList.remove("done"); }, 2000);
+  }));
+
+  /* ---------- Start ---------- */
+  const s = loadSession();
+  if (s && s.data && s.data.templates) enterApp(s.user, s.data);
+  else $("user").focus();
+})();
+</script>
+</body>
+</html>
