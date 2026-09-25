@@ -29,7 +29,7 @@ OUT = os.path.join(HERE, "data.enc.json")
 ITERATIONS = 310_000
 
 STATUSES = {"none", "cozzini", "unknown"}
-FOCUSES = {"all", "procurement", "purchasing", "culinary", "executive"}
+FOCUSES = {"all", "procurement", "purchasing", "culinary", "executive", "unknown"}
 
 
 def fail(msg):

@@ -28,6 +28,7 @@ fpsales/
         ├── cozzini-purchasing.md
         ├── cozzini-culinary.md
         ├── cozzini-executive.md
+        ├── cozzini-unknown.md      # Uses Cozzini, role unknown
         └── unknown.md              # status: Unknown (all focuses)
 ```
 
@@ -43,7 +44,7 @@ Each template starts with a header:
 ---
 profile: Knife Service Culinary Focus
 status: cozzini          # none | cozzini | unknown
-focus: culinary          # procurement | purchasing | culinary | executive | all
+focus: culinary          # procurement | purchasing | culinary | executive | unknown | all
 subject: Better knives for {{company_s}} kitchen teams
 ---
 ```
@@ -70,7 +71,7 @@ Edit `private/credentials.json`, run `python3 build.py`, commit and push. The ol
 - Templates are encrypted (PBKDF2 + HMAC-SHA256, encrypt-then-MAC). Without the user name and password, `data.enc.json` is unreadable.
 - `index.html` and the logo are public files. They reveal the layout and the status and focus options, not the email text.
 - `private/` must stay out of git. Before each commit, check that GitHub Desktop lists no files under `private/`.
-- Contact focus is suggested from keywords in the title (chef, procurement, purchasing, VP, and so on). Nati can override it.
+- Role is suggested from keywords in the title (chef, procurement, purchasing, VP, and so on) and defaults to Unknown. Nati can override it. In the template headers, the role is stored as `focus`.
 
 ## Rules
 
