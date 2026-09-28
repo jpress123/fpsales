@@ -1,4 +1,4 @@
-# FoodPrep Client Catalyzer V1.0
+# FoodPrep Client Catalyzer V1.2
 
 A private tool for Nati Press. After signing in, Nati enters a target’s name, title and company, chooses the service status and contact focus, and generates an outreach email to copy into Outlook.
 
@@ -23,7 +23,8 @@ fpsales/
     ├── credentials.json            # Nati’s user name and password
     ├── FP_Sales_Email_samples.docx # original samples
     └── templates/
-        ├── _signature.md           # signature added to every email
+        ├── _signature.md           # sign-off and name added to every email
+        ├── _snippets.md            # shared wording variants
         ├── none.md                 # status: No knife service, fallback for Unknown role
         ├── none-procurement.md
         ├── none-purchasing.md
@@ -55,6 +56,17 @@ subject: Better knives for {{company_s}} kitchen teams
 ```
 
 The site looks for `status-focus` first (e.g. `cozzini-culinary`), then falls back to the `focus: all` template for that status. To add a focus-specific version, e.g. a culinary email for “No knife service,” create `none-culinary.md` with `status: none` and `focus: culinary`.
+
+### Wording variation
+
+Every draft is assembled fresh, so no two emails to different contacts read the same.
+
+- `[[option A || option B || option C]]` picks one option at random.
+- `[[@intro]]` picks one line from the `## intro` list in `private/templates/_snippets.md` (shared lists: greeting, intro, sample, closing, signoff).
+- Bullet lists are shuffled on every draft.
+- The **New wording** button redraws the current email for the same contact.
+
+To add a variant, add an option inside `[[ ]]` or a new line under a `##` list, then run `python3 build.py`.
 
 ### Placeholders
 

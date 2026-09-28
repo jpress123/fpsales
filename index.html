@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:,">
-<title>FoodPrep Client Catalyzer V1.0</title>
+<title>FoodPrep Client Catalyzer V1.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
@@ -230,14 +230,13 @@
   #subject { font-weight: 600; margin-bottom: 18px; }
   #body { min-height: 520px; resize: vertical; line-height: 1.55; white-space: pre-wrap; }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-  .stale {
+  .draft-for {
     margin-top: 12px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     font-size: 14px;
     font-weight: 600;
-    color: var(--fp-indigo-deep);
-    background: #FFF1E6;
-    border-left: 4px solid var(--fp-orange);
+    color: var(--fp-indigo);
+    background: var(--fp-lavender);
     border-radius: 4px;
   }
   .meta { font-size: 13px; color: var(--fp-grey); margin-top: 12px; }
@@ -286,7 +285,7 @@
     <div class="bar">
       <div class="brand">
         <img src="assets/logo.png" alt="FoodPrep Solutions">
-        <h1>Client Catalyzer V1.0</h1>
+        <h1>Client Catalyzer V1.2</h1>
       </div>
       <div class="who"><span id="who-name"></span><button type="button" id="logout">Sign out</button></div>
     </div>
@@ -322,7 +321,7 @@
           <input id="t-company" autocomplete="off" placeholder="Darden Restaurants">
         </div>
         <div class="field">
-          <label for="t-email">Email <em>(optional, for Open in Outlook)</em></label>
+          <label for="t-email">Email <em>(optional, fills the To line in Outlook)</em></label>
           <input id="t-email" type="email" autocomplete="off" placeholder="michael.russo@darden.com">
         </div>
       </fieldset>
@@ -351,9 +350,10 @@
         <input id="subject">
         <div class="out-label"><label for="body">Message</label></div>
         <textarea id="body" spellcheck="true"></textarea>
-        <div class="stale" id="stale" hidden>Details changed. Press Generate email to update this draft.</div>
+        <div class="draft-for" id="draft-for"></div>
         <div class="actions">
           <button type="button" class="btn" id="open-mail">Open in Outlook</button>
+          <button type="button" class="btn secondary" id="reword">New wording</button>
           <button type="button" class="btn secondary" data-copy="subject">Copy subject</button>
           <button type="button" class="btn secondary" data-copy="body">Copy message</button>
         </div>
@@ -453,7 +453,7 @@
   });
 
   $("logout").addEventListener("click", () => {
-    clearSession(); DATA = null; $("stale").hidden = true;
+    clearSession(); DATA = null;
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
     $("lead-form").reset(); showEmpty();
     $("app").hidden = true; $("login").hidden = false; $("user").focus();
@@ -492,6 +492,40 @@
   function fill(text, vars) {
     return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (k in vars ? vars[k] : m));
   }
+  /* ---------- Wording variation ----------
+     [[@name]]      one line from the "## name" list in _snippets.md
+     [[a || b]]     one of the options
+     bullet lists   shuffled on every draft */
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  function vary(text) {
+    let t = text;
+    for (let i = 0; i < 5 && /\[\[@\w+\]\]/.test(t); i++) {
+      t = t.replace(/\[\[@(\w+)\]\]/g, (m, k) => (DATA.snippets && DATA.snippets[k] && DATA.snippets[k].length ? pick(DATA.snippets[k]) : ""));
+    }
+    t = t.replace(/\[\[([\s\S]*?)\]\]/g, (m, inner) => pick(inner.split("||").map((x) => x.trim())));
+    const lines = t.split("\n"), out = [];
+    for (let i = 0; i < lines.length;) {
+      if (lines[i].trim().startsWith("•")) {
+        const run = [];
+        while (i < lines.length && lines[i].trim().startsWith("•")) run.push(lines[i++]);
+        for (let j = run.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [run[j], run[k]] = [run[k], run[j]]; }
+        out.push(...run);
+      } else out.push(lines[i++]);
+    }
+    return out.join("\n");
+  }
+  let lastDraft = null;
+  function writeDraft(tpl, vars) {
+    let subject, body, tries = 0;
+    do {
+      subject = fill(vary(tpl.subject), vars);
+      body = fill(vary(tpl.body), vars) + "\n\n" + fill(vary(DATA.signature), vars);
+    } while (lastDraft && lastDraft.tpl === tpl && body === $("body").value && ++tries < 8);
+    $("subject").value = subject;
+    $("body").value = body;
+    lastDraft = { tpl, vars };
+  }
+
   function pickTemplate(status, focus) {
     const t = DATA.templates;
     return t[status + "-" + focus] || t[status] || null;
@@ -506,6 +540,9 @@
     $("t-name").classList.toggle("invalid", !name);
     $("t-company").classList.toggle("invalid", !company);
     if (!name || !company) { err.textContent = "Name and company are required."; return; }
+    const emailTo = $("t-email").value.trim();
+    $("t-email").classList.toggle("invalid", !!emailTo && !EMAIL_RE.test(emailTo));
+    if (emailTo && !EMAIL_RE.test(emailTo)) { err.textContent = "Check the email address format."; return; }
     const tpl = pickTemplate(status, focus);
     if (!tpl) { err.textContent = "No template exists for this role and status yet."; return; }
     err.textContent = "";
@@ -517,28 +554,37 @@
       greeting_name: focus === "culinary" ? "Chef " + first : first,
       company_s: possessive(company),
     };
-    $("subject").value = fill(tpl.subject, vars);
-    $("body").value = fill(tpl.body, vars) + "\n\n" + DATA.signature;
-    $("stale").hidden = true; lastEmail = $("t-email").value.trim(); $("mail-hint").textContent = "";
+    lastDraft = null;
+    writeDraft(tpl, vars);
+    lastEmail = emailTo; $("mail-hint").textContent = "";
+    $("draft-for").textContent = "Draft for " + name + (title ? ", " + title : "") + ", " + company + (emailTo ? "  ·  To: " + emailTo : "");
     $("meta").textContent = "Template: " + tpl.profile + "  ·  Templates updated " + DATA.built;
+    resetTarget();
     $("empty").hidden = true; $("result").hidden = false;
     document.querySelectorAll("[data-copy]").forEach((b) => { b.classList.remove("done"); b.textContent = b.dataset.copy === "subject" ? "Copy subject" : "Copy message"; });
     if (window.matchMedia("(max-width: 860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  /* ---------- Stale draft notice ---------- */
+  $("reword").addEventListener("click", () => {
+    if (!lastDraft) return;
+    writeDraft(lastDraft.tpl, lastDraft.vars);
+    document.querySelectorAll("[data-copy]").forEach((b) => { b.classList.remove("done"); b.textContent = b.dataset.copy === "subject" ? "Copy subject" : "Copy message"; });
+  });
+
+  /* ---------- Clear the target fields after each generated email ---------- */
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   let lastEmail = "";
-  const markStale = () => { if (!$("result").hidden) $("stale").hidden = false; };
-  ["t-name", "t-title", "t-company"].forEach((id) => $(id).addEventListener("input", markStale));
-  $("t-role").addEventListener("change", markStale);
-  document.querySelectorAll('input[name="status"]').forEach((r) => r.addEventListener("change", markStale));
+  function resetTarget() {
+    ["t-name", "t-title", "t-company", "t-email"].forEach((id) => { $(id).value = ""; $(id).classList.remove("invalid"); });
+    roleTouched = false;
+    suggestFocus();
+    if (!window.matchMedia("(max-width: 860px)").matches) $("t-name").focus();
+  }
 
   /* ---------- Open in Outlook (default mail app) ---------- */
   $("open-mail").addEventListener("click", () => {
-    const to = $("t-email").value.trim();
+    const to = lastEmail;
     const hint = $("mail-hint");
-    if (to && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { hint.textContent = "Check the email address format."; hint.classList.add("warn"); return; }
-    hint.classList.remove("warn");
     const body = $("body").value.replace(/\r?\n/g, "\r\n");
     const url = "mailto:" + encodeURIComponent(to).replace(/%40/g, "@") +
       "?subject=" + encodeURIComponent($("subject").value) + "&body=" + encodeURIComponent(body);

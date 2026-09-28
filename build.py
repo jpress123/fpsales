@@ -83,6 +83,19 @@ def main():
         fail("private/templates/_signature.md not found.")
     signature = open(sig_path, encoding="utf-8").read().strip("\n")
 
+    # Shared wording variants: private/templates/_snippets.md
+    # "## name" starts a list, each non-empty line below it is one variant.
+    snippets = {}
+    snip_path = os.path.join(TEMPLATES, "_snippets.md")
+    if os.path.exists(snip_path):
+        current = None
+        for line in open(snip_path, encoding="utf-8").read().splitlines():
+            if line.startswith("## "):
+                current = line[3:].strip()
+                snippets[current] = []
+            elif line.strip() and current and not line.startswith("#"):
+                snippets[current].append(line.strip())
+
     templates = {}
     for name in sorted(os.listdir(TEMPLATES)):
         if not name.endswith(".md") or name.startswith("_"):
@@ -93,6 +106,16 @@ def main():
             fail(f"Two templates share status/focus '{key}': {templates[key]['file']} and {name}.")
         templates[key] = t
 
+    def check_variants(label, text):
+        if text.count("[[") != text.count("]]"):
+            fail(f"{label}: unmatched [[ or ]] brackets.")
+        for ref in re.findall(r"\[\[@(\w+)\]\]", text):
+            if ref not in snippets:
+                fail(f"{label}: uses [[@{ref}]] but _snippets.md has no '## {ref}' list.")
+    check_variants("_signature.md", signature)
+    for t in templates.values():
+        check_variants(t["file"], t["subject"] + "\n" + t["body"])
+
     for status in STATUSES:
         if status not in templates and not any(k.startswith(status + "-") for k in templates):
             print(f"WARNING: no template covers status '{status}'.")
@@ -100,6 +123,7 @@ def main():
     payload = json.dumps({
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "signature": signature,
+        "snippets": snippets,
         "templates": templates,
     }, ensure_ascii=False).encode("utf-8")
 
