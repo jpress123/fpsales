@@ -369,7 +369,7 @@
 (() => {
   "use strict";
   const DATA_URL = "data.enc.json";
-  const SESSION_KEY = "fpsales.session.v1";
+  const SESSION_KEY = "fpsales.session.v2";
   const $ = (id) => document.getElementById(id);
   const enc = new TextEncoder();
   const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -402,7 +402,9 @@
     }));
     const pt = new Uint8Array(ct.length);
     for (let i = 0; i < ct.length; i++) pt[i] = ct[i] ^ new Uint8Array(streams[i >> 5])[i & 31];
-    return JSON.parse(new TextDecoder().decode(pt));
+    const data = JSON.parse(new TextDecoder().decode(pt));
+    data.stamp = box.tag;   // identifies this build of the templates
+    return data;
   }
 
   /* ---------- Session ---------- */
@@ -612,9 +614,16 @@
   }));
 
   /* ---------- Start ---------- */
-  const s = loadSession();
-  if (s && s.data && s.data.templates) enterApp(s.user, s.data);
-  else $("user").focus();
+  /* Reuse a signed-in tab only while the published templates are unchanged.
+     After a new build is pushed, the tab asks for the password again and loads the new templates. */
+  (async () => {
+    const s = loadSession();
+    if (!(s && s.data && s.data.templates && s.data.stamp)) { clearSession(); $("user").focus(); return; }
+    let current = null;
+    try { current = (await (await fetch(DATA_URL, { cache: "no-store" })).json()).tag; } catch (e) {}
+    if (current && current !== s.data.stamp) { clearSession(); $("user").focus(); return; }
+    enterApp(s.user, s.data);
+  })();
 })();
 </script>
 </body>
